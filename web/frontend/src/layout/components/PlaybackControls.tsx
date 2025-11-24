@@ -50,8 +50,9 @@ export const PlaybackControls = () => {
 	};
 
 	return (
-		<footer className='h-20 sm:h-24 bg-zinc-900 border-t border-zinc-800 p-4 mx-2 mb-2 rounded-lg'>
-			<div className='flex justify-between items-center h-full max-w-[1800px] mx-auto'>
+		<footer className={`player-footer h-20 sm:h-24 bg-zinc-900 border-t border-zinc-800 p-4 mx-2 mb-2 rounded-lg ${isPlaying ? 'playing' : ''}`}>
+			<div className='player-footer-border'></div>
+			<div className='player-footer-content flex justify-between items-center h-full max-w-[1800px] mx-auto'>
 				<div className='hidden sm:flex items-center gap-4 min-w-[180px] w-[30%]'>
 					{currentSong && (
 						<>
