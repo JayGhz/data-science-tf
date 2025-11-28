@@ -27,6 +27,11 @@ const songSchema = new mongoose.Schema(
 			ref: "Album",
 			required: false,
 		},
+		datasetId: {
+			type: String,
+			required: false,
+			index: true,
+		},
 	},
 	{ timestamps: true }
 );

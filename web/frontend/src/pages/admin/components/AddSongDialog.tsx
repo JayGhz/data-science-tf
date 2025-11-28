@@ -21,6 +21,7 @@ interface NewSong {
 	artist: string;
 	album: string;
 	duration: string;
+	datasetId: string;
 }
 
 const AddSongDialog = () => {
@@ -33,6 +34,7 @@ const AddSongDialog = () => {
 		artist: "",
 		album: "",
 		duration: "0",
+		datasetId: "",
 	});
 
 	const [files, setFiles] = useState<{ audio: File | null; image: File | null }>({
@@ -59,6 +61,9 @@ const AddSongDialog = () => {
 			if (newSong.album && newSong.album !== "none") {
 				formData.append("albumId", newSong.album);
 			}
+			if (newSong.datasetId) {
+				formData.append("datasetId", newSong.datasetId);
+			}
 
 			formData.append("audioFile", files.audio);
 			formData.append("imageFile", files.image);
@@ -74,6 +79,7 @@ const AddSongDialog = () => {
 				artist: "",
 				album: "",
 				duration: "0",
+				datasetId: "",
 			});
 
 			setFiles({
@@ -183,6 +189,19 @@ const AddSongDialog = () => {
 							onChange={(e) => setNewSong({ ...newSong, duration: e.target.value || "0" })}
 							className='bg-zinc-800 border-zinc-700'
 						/>
+					</div>
+
+					<div className='space-y-2'>
+						<label className='text-sm font-medium'>Dataset ID (Optional)</label>
+						<Input
+							value={newSong.datasetId}
+							onChange={(e) => setNewSong({ ...newSong, datasetId: e.target.value })}
+							placeholder='e.g., 4Hhv2vrOTy89HFRcjU3QOx (Spotify ID)'
+							className='bg-zinc-800 border-zinc-700'
+						/>
+						<p className='text-xs text-zinc-500'>
+							ID de Spotify del CSV para recomendaciones ML. Deja vacío si no lo tienes.
+						</p>
 					</div>
 
 					<div className='space-y-2'>

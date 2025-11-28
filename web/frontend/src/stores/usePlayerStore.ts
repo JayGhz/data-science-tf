@@ -1,12 +1,17 @@
 import { create } from "zustand";
 import { Song } from "@/types";
 import { useChatStore } from "./useChatStore";
+import { useMLStore } from "./useMLStore";
+import { useMusicStore } from "./useMusicStore";
 
 interface PlayerStore {
 	currentSong: Song | null;
 	isPlaying: boolean;
 	queue: Song[];
 	currentIndex: number;
+	useMLRecommendations: boolean;
+	mlReferenceSong: Song | null;
+	mlUsedRecommendations: string[];
 
 	initializeQueue: (songs: Song[]) => void;
 	playAlbum: (songs: Song[], startIndex?: number) => void;
@@ -14,6 +19,7 @@ interface PlayerStore {
 	togglePlay: () => void;
 	playNext: () => void;
 	playPrevious: () => void;
+	setUseMLRecommendations: (use: boolean) => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set, get) => ({
@@ -21,6 +27,9 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	isPlaying: false,
 	queue: [],
 	currentIndex: -1,
+	useMLRecommendations: false,
+	mlReferenceSong: null,
+	mlUsedRecommendations: [],
 
 	initializeQueue: (songs: Song[]) => {
 		set({
@@ -47,6 +56,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 			currentSong: song,
 			currentIndex: startIndex,
 			isPlaying: true,
+			mlReferenceSong: song,
+			mlUsedRecommendations: [],
 		});
 	},
 
@@ -66,6 +77,8 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 			currentSong: song,
 			isPlaying: true,
 			currentIndex: songIndex !== -1 ? songIndex : get().currentIndex,
+			mlReferenceSong: song,
+			mlUsedRecommendations: [],
 		});
 	},
 
@@ -88,7 +101,13 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 	},
 
 	playNext: () => {
-		const { currentIndex, queue } = get();
+		const { currentIndex, queue, useMLRecommendations, mlReferenceSong } = get();
+		
+		if (useMLRecommendations && mlReferenceSong) {
+			playNextWithML();
+			return;
+		}
+		
 		const nextIndex = currentIndex + 1;
 
 		// if there is a next song to play, let's play it
@@ -155,4 +174,102 @@ export const usePlayerStore = create<PlayerStore>((set, get) => ({
 			}
 		}
 	},
+	
+	setUseMLRecommendations: (use: boolean) => {
+		set({ useMLRecommendations: use });
+	},
 }));
+
+async function playNextWithML() {
+	const { mlReferenceSong, mlUsedRecommendations } = usePlayerStore.getState();
+	
+	if (!mlReferenceSong) {
+		return;
+	}
+	
+	try {
+		const recommendations = await useMLStore.getState().getRecommendations(
+			mlReferenceSong.title, 
+			mlReferenceSong.artist, 
+			10,
+			mlReferenceSong.datasetId
+		);
+		
+		if (recommendations.length > 0) {
+			let allSongs = useMusicStore.getState().songs;
+			
+			if (allSongs.length === 0) {
+				await useMusicStore.getState().fetchSongs();
+				allSongs = useMusicStore.getState().songs;
+			}
+			
+			for (const recommendedSong of recommendations) {
+				if (mlUsedRecommendations.includes(recommendedSong.dataset_id)) {
+					continue;
+				}
+				
+				let matchedSong = allSongs.find(song => 
+					song.datasetId && song.datasetId === recommendedSong.dataset_id
+				);
+				
+				if (!matchedSong) {
+					matchedSong = allSongs.find(song => 
+						song.title.toLowerCase().includes(recommendedSong.name.toLowerCase()) ||
+						recommendedSong.name.toLowerCase().includes(song.title.toLowerCase())
+					);
+				}
+				
+				if (matchedSong) {
+					const socket = useChatStore.getState().socket;
+					if (socket.auth) {
+						socket.emit("update_activity", {
+							userId: socket.auth.userId,
+							activity: `Playing ${matchedSong.title} by ${matchedSong.artist}`,
+						});
+					}
+					
+					usePlayerStore.setState({
+						currentSong: matchedSong,
+						isPlaying: true,
+						mlUsedRecommendations: [...mlUsedRecommendations, recommendedSong.dataset_id],
+					});
+					
+					return;
+				}
+			}
+		}
+	} catch (error) {
+		console.error("Error getting ML recommendation:", error);
+	}
+	
+	const { currentIndex, queue } = usePlayerStore.getState();
+	const nextIndex = currentIndex + 1;
+	
+	if (nextIndex < queue.length) {
+		const nextSong = queue[nextIndex];
+		
+		const socket = useChatStore.getState().socket;
+		if (socket.auth) {
+			socket.emit("update_activity", {
+				userId: socket.auth.userId,
+				activity: `Playing ${nextSong.title} by ${nextSong.artist}`,
+			});
+		}
+		
+		usePlayerStore.setState({
+			currentSong: nextSong,
+			currentIndex: nextIndex,
+			isPlaying: true,
+		});
+	} else {
+		usePlayerStore.setState({ isPlaying: false });
+		
+		const socket = useChatStore.getState().socket;
+		if (socket.auth) {
+			socket.emit("update_activity", {
+				userId: socket.auth.userId,
+				activity: `Idle`,
+			});
+		}
+	}
+}

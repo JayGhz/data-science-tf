@@ -8,6 +8,20 @@ export interface Song {
 	duration: number;
 	createdAt: string;
 	updatedAt: string;
+	datasetId?: string;
+}
+
+export interface TrendingPrediction {
+	title: string;
+	artist: string;
+	probability: number;
+	dataset_id?: string;
+}
+
+export interface SongRecommendation {
+	dataset_id: string;
+	name: string;
+	similarity: number;
 }
 
 export interface Album {

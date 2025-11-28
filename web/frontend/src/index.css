@@ -202,13 +202,13 @@
 		opacity: 0.65;
 	}
 
-	/* Activar animaciones solo cuando está reproduciendo */
-	.player-footer.playing::before,
-	.player-footer.playing::after {
+	/* Activar animaciones solo cuando se usan recomendaciones ML */
+	.player-footer.ml-recommendations::before,
+	.player-footer.ml-recommendations::after {
 		opacity: 1;
 	}
 
-	.player-footer.playing .player-footer-border {
+	.player-footer.ml-recommendations .player-footer-border {
 		opacity: 1;
 		animation: spinBorder 3s linear infinite;
 	}
@@ -219,12 +219,12 @@
 		z-index: 10;
 	}
 
-	/* Activar animaciones de blur durante reproducción */
-	.player-footer.playing::before {
+	/* Activar animaciones de blur cuando se usan recomendaciones ML */
+	.player-footer.ml-recommendations::before {
 		animation: movePlayerBlur 12s ease-in-out infinite;
 	}
 
-	.player-footer.playing::after {
+	.player-footer.ml-recommendations::after {
 		animation: movePlayerBlurReverse 10s ease-in-out infinite;
 	}
 
@@ -279,5 +279,15 @@
 	.player-footer::after,
 	.player-footer-border {
 		transition: opacity 0.5s ease;
+	}
+
+	/* Animación shimmer para barra de progreso */
+	@keyframes shimmer {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(100%);
+		}
 	}
 }

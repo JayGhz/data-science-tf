@@ -11,7 +11,7 @@ export const getAllSongs = async (req, res, next) => {
 	}
 };
 
-export const getFeaturedSongs = async (req, res, next) => {
+	export const getFeaturedSongs = async (req, res, next) => {
 	try {
 		// fetch 6 random songs using mongodb's aggregation pipeline
 		const songs = await Song.aggregate([
@@ -25,17 +25,16 @@ export const getFeaturedSongs = async (req, res, next) => {
 					artist: 1,
 					imageUrl: 1,
 					audioUrl: 1,
+					datasetId: 1,
 				},
 			},
-		]);
-
-		res.json(songs);
+		]);		res.json(songs);
 	} catch (error) {
 		next(error);
 	}
 };
 
-export const getMadeForYouSongs = async (req, res, next) => {
+	export const getMadeForYouSongs = async (req, res, next) => {
 	try {
 		const songs = await Song.aggregate([
 			{
@@ -48,17 +47,16 @@ export const getMadeForYouSongs = async (req, res, next) => {
 					artist: 1,
 					imageUrl: 1,
 					audioUrl: 1,
+					datasetId: 1,
 				},
 			},
-		]);
-
-		res.json(songs);
+		]);		res.json(songs);
 	} catch (error) {
 		next(error);
 	}
 };
 
-export const getTrendingSongs = async (req, res, next) => {
+	export const getTrendingSongs = async (req, res, next) => {
 	try {
 		const songs = await Song.aggregate([
 			{
@@ -71,11 +69,10 @@ export const getTrendingSongs = async (req, res, next) => {
 					artist: 1,
 					imageUrl: 1,
 					audioUrl: 1,
+					datasetId: 1,
 				},
 			},
-		]);
-
-		res.json(songs);
+		]);		res.json(songs);
 	} catch (error) {
 		next(error);
 	}
